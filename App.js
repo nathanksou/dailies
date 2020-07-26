@@ -1,21 +1,40 @@
-import { StatusBar } from 'expo-status-bar';
-import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import React, { useState }from 'react';
+import { Alert, StyleSheet, Text, View, TouchableOpacity } from 'react-native';
 
-export default function App() {
+const App = () => {
+  const [location, setLocation] = useState(null);
+  findCoordinates = () => {
+    navigator.geolocation.getCurrentPosition(
+      position => {
+        const coordinates = JSON.stringify(position);
+        setLocation(coordinates);
+      },
+      error => Alert.alert(error.message),
+      { enableHighAccuracy: true, timeout: 20000, maximumAge: 1000 }
+    );
+  };
   return (
     <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
-      <StatusBar style="auto" />
+      <TouchableOpacity onPress={findCoordinates}>
+        <Text style={styles.welcome}>Find My Coords?</Text>
+        <Text>Location: {location}</Text>
+      </TouchableOpacity>
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
     justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F5FCFF'
   },
+  welcome: {
+    fontSize: 20,
+    textAlign: 'center',
+    margin: 10
+  }
 });
+
+export default App;
