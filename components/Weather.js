@@ -1,17 +1,18 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import weatherConditions from '../utils/WeatherConditions.js'
 
-const Weather = () => {
+const Weather = ({ temperature, weather }) => {
   return (
-    <View style={styles.weatherContainer}>
+    <View style={[styles.weatherContainer, { backgroundColor: weatherConditions[weather].color }]}>
       <View style={styles.headerContainer}>
-        <Icon size={48} name="weather-sunny" color={'#fff'} />
-        <Text style={styles.tempText}>Temperature˚</Text>
+        <Icon size={48} name={weatherConditions[weather].icon} color={'#fff'} />
+        <Text style={styles.tempText}>{temperature}˚</Text>
       </View>
       <View style={styles.bodyContainer}>
-        <Text style={styles.title}>So Sunny</Text>
-        <Text style={styles.subtitle}>It hurts my eyes!</Text>
+        <Text style={styles.title}>{weatherConditions[weather].title}</Text>
+        <Text style={styles.subtitle}>{weatherConditions[weather].subtitle}</Text>
       </View>
     </View>
   );
