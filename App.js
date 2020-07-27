@@ -3,6 +3,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import Swiper from 'react-native-swiper';
 import Weather from './components/Weather.js';
 import WEATHER_API_KEY from './utils/WeatherApiKey.js';
+import Quote from './components/Quote.js';
 
 const App = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -52,9 +53,8 @@ const App = () => {
           <Weather temperature={temperature} weather={weatherCondition} />
         )}
       </View>
-      <View style={styles.slide2}>
-        <Text style={styles.text}>{quote}</Text>
-        <Text style={styles.text}>By {author}</Text>
+      <View style={styles.container}>
+        <Quote quote={quote} author={author} />
       </View>
       <View style={styles.slide3}>
         <Text style={styles.text}>And simple</Text>
