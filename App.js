@@ -8,6 +8,8 @@ const App = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [temperature, setTemperature] = useState(0);
   const [weatherCondition, setWeatherCondition] = useState(null);
+  const [quote, setQuote] = useState('');
+  const [author, setAuthor] = useState('');
   const [error, setError] = useState(null);
 
   const fetchWeather = (lat = 25, lon = 25) => {
@@ -18,12 +20,22 @@ const App = () => {
         setWeatherCondition(json.weather[0].main);
         setIsLoading(false);
       });
-  }
+  };
+
+  const fetchQuote = () => {
+    fetch(`http://quotes.rest/qod`)
+      .then(result => result.json())
+      .then(json => {
+        setQuote(json.contents.quotes[0].quote);
+        setAuthor(json.contents.quotes[0].author);
+      });
+  };
 
   useEffect(() => {
     navigator.geolocation.getCurrentPosition(
       position => {
         fetchWeather(position.coords.latitude, position.coords.longitude);
+        fetchQuote();
       },
       error => {
         setError('Error Getting Weather Conditions');
@@ -41,11 +53,12 @@ const App = () => {
         )}
       </View>
       <View style={styles.slide2}>
-        <Text style={styles.text}>Beautiful</Text>
+        <Text style={styles.text}>{quote}</Text>
+        <Text style={styles.text}>By {author}</Text>
       </View>
       <View style={styles.slide3}>
         <Text style={styles.text}>And simple</Text>
-        </View>
+      </View>
     </Swiper>
   );
 };
