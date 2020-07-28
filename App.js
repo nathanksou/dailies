@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, Button, StyleSheet } from 'react-native';
 import Swiper from 'react-native-swiper';
-import * as Linking from 'expo-linking';
 import * as WebBrowser from 'expo-web-browser';
 import { makeRedirectUri, useAuthRequest } from 'expo-auth-session';
 import { encode as btoa } from 'base-64';
@@ -105,7 +104,6 @@ const App = () => {
   useEffect(() => {
     if (response?.type === 'success') {
       const { code } = response.params;
-
       const credsB64 = btoa(`${config.SPOTIFY_CLIENT_ID}:${config.SPOTIFY_CLIENT_SECRET}`);
       fetch(discovery.tokenEndpoint, {
         method: 'POST',
@@ -113,19 +111,43 @@ const App = () => {
           Authorization: `Basic ${credsB64}`,
           'Content-Type': 'application/x-www-form-urlencoded',
         },
-        //&client_id=${config.SPOTIFY_CLIENT_ID}&client_secret=${config.SPOTIFY_CLIENT_SECRET}
         body: `grant_type=authorization_code&code=${code}&redirect_uri=${makeRedirectUri({
           native: config.SPOTIFY_REDIRECT_URI
-        })}`,
+        })}`
       })
-        .then(response => response.text())
+        .then(response => response.json())
         .then(json => {
-          console.log(json);
-          // const {
-          //   access_token: accessToken,
-          //   refresh_token: refreshToken,
-          //   expires_in: expiresIn,
-          // } = json;
+          const accessToken = json.access_token
+          fetch(`https://api.spotify.com/v1/playlists/2Pu5NN6ZX2uq2xk7gdx91s/tracks?limit=1`, {
+            method: 'GET',
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              'Content-Type': 'application/x-www-form-urlencoded'
+            }
+          })
+            .then(response => response.json())
+            .then(json => {
+              const track = json.items[0].track;
+              const contextUri = track.uri;
+              fetch('https://api.spotify.com/v1/me/player/devices', {
+                headers: {
+                  Authorization: `Bearer ${accessToken}`,
+                },
+              })
+                .then(response => response.json())
+                .then(json => {
+                  fetch(`https://api.spotify.com/v1/me/player/play?device_id=${json.devices[0].id}`, {
+                    method: 'PUT',
+                    headers: {
+                      Authorization: `Bearer ${accessToken}`,
+                    },
+                    body: {"context_uri": "spotify:playlist:2Pu5NN6ZX2uq2xk7gdx91s"}
+                    // {"uris": ["spotify:track:1ooO1j7bseZCHaCFxVpoMq", "spotify:track:16qPkGAjjtZ9dKuSUwpFB5"]}
+                  })
+                    .then(response => response.text())
+                    .then(json => console.log(json));
+                });
+            });
         });
     }
 
