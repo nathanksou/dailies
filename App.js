@@ -4,7 +4,7 @@ import Swiper from 'react-native-swiper';
 import * as Linking from 'expo-linking';
 import * as WebBrowser from 'expo-web-browser';
 import { makeRedirectUri, useAuthRequest } from 'expo-auth-session';
-import { encode } from 'base-64';
+import { encode as btoa } from 'base-64';
 import config from './utils/config.js';
 import Weather from './components/Weather.js';
 import Quote from './components/Quote.js';
@@ -91,13 +91,12 @@ const App = () => {
   const [request, response, promptAsync] = useAuthRequest(
     {
       clientId: config.SPOTIFY_CLIENT_ID,
-      clientSecret: config.SPOTIFY_CLIENT_SECRET,
       scopes: ['user-modify-playback-state','user-read-currently-playing','user-read-playback-state','user-library-modify',
       'user-library-read','playlist-read-private','playlist-read-collaborative','playlist-modify-public',
       'playlist-modify-private','user-read-recently-played','user-top-read'],
       usePKCE: false,
       redirectUri: makeRedirectUri({
-        native: config.SPOTIFY_REDIRECT_URI,
+        native: config.SPOTIFY_REDIRECT_URI
       }),
     },
     discovery
@@ -106,6 +105,28 @@ const App = () => {
   useEffect(() => {
     if (response?.type === 'success') {
       const { code } = response.params;
+
+      const credsB64 = btoa(`${config.SPOTIFY_CLIENT_ID}:${config.SPOTIFY_CLIENT_SECRET}`);
+      fetch(discovery.tokenEndpoint, {
+        method: 'POST',
+        headers: {
+          Authorization: `Basic ${credsB64}`,
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        //&client_id=${config.SPOTIFY_CLIENT_ID}&client_secret=${config.SPOTIFY_CLIENT_SECRET}
+        body: `grant_type=authorization_code&code=${code}&redirect_uri=${makeRedirectUri({
+          native: config.SPOTIFY_REDIRECT_URI
+        })}`,
+      })
+        .then(response => response.text())
+        .then(json => {
+          console.log(json);
+          // const {
+          //   access_token: accessToken,
+          //   refresh_token: refreshToken,
+          //   expires_in: expiresIn,
+          // } = json;
+        });
     }
 
     navigator.geolocation.getCurrentPosition(
