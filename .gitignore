@@ -10,5 +10,6 @@ npm-debug.*
 web-build/
 package-lock.json
 utils/WeatherApiKey.js
+utils/YelpApiKey.js
 # macOS
 .DS_Store
