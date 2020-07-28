@@ -1,11 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, Button, StyleSheet } from 'react-native';
 import Swiper from 'react-native-swiper';
+import * as Linking from 'expo-linking';
+import * as WebBrowser from 'expo-web-browser';
+import { makeRedirectUri, useAuthRequest } from 'expo-auth-session';
+import { encode } from 'base-64';
 import config from './utils/config.js';
 import Weather from './components/Weather.js';
 import Quote from './components/Quote.js';
 import Business from './components/Business.js';
 import News from './components/News.js';
+
+WebBrowser.maybeCompleteAuthSession();
+
+const discovery = {
+  authorizationEndpoint: 'https://accounts.spotify.com/authorize',
+  tokenEndpoint: 'https://accounts.spotify.com/api/token',
+};
 
 const App = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -77,11 +88,29 @@ const App = () => {
       });
   };
 
+  const [request, response, promptAsync] = useAuthRequest(
+    {
+      clientId: config.SPOTIFY_CLIENT_ID,
+      clientSecret: config.SPOTIFY_CLIENT_SECRET,
+      scopes: ['user-modify-playback-state','user-read-currently-playing','user-read-playback-state','user-library-modify',
+      'user-library-read','playlist-read-private','playlist-read-collaborative','playlist-modify-public',
+      'playlist-modify-private','user-read-recently-played','user-top-read'],
+      usePKCE: false,
+      redirectUri: makeRedirectUri({
+        native: config.SPOTIFY_REDIRECT_URI,
+      }),
+    },
+    discovery
+  );
+
   useEffect(() => {
+    if (response?.type === 'success') {
+      const { code } = response.params;
+    }
+
     navigator.geolocation.getCurrentPosition(
       position => {
         fetchWeather(position.coords.latitude, position.coords.longitude);
-        fetchQuote();
         fetchBusiness(position.coords.latitude, position.coords.longitude);
         fetchNews(position.coords.latitude, position.coords.longitude);
       },
@@ -89,7 +118,8 @@ const App = () => {
         setError('Error Fetching Data');
       }
     );
-  }, []);
+    fetchQuote();
+  }, [response]);
 
   return (
     <Swiper style={styles.wrapper}>
@@ -99,6 +129,15 @@ const App = () => {
         ) : (
           <Weather temperature={temperature} weather={weatherCondition} />
         )}
+      </View>
+      <View style={styles.slide}>
+        <Button
+          disabled={!request}
+          title="Login"
+          onPress={() => {
+            promptAsync();
+            }}
+        />
       </View>
       <View style={styles.container}>
         <Quote quote={quote} />

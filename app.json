@@ -1,6 +1,7 @@
 {
   "expo": {
     "name": "dailies",
+    "scheme": "dailies",
     "slug": "dailies",
     "version": "1.0.0",
     "orientation": "portrait",
