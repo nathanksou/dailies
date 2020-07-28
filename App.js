@@ -53,22 +53,27 @@ const App = () => {
       });
   };
 
-  const fetchNews = () => {
-    fetch(`https://newsapi.org/v2/top-headlines?country=us`, {
-      headers: new Headers({
-        'Authorization': config.NEWS_API_KEY
-      })
-    })
+  const fetchNews = (lat = 25, lon = 25) => {
+    fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lon}&key=${config.GOOGLE_API_KEY}&result_type=country`)
       .then(response => response.json())
       .then(json => {
-        setNews({
-          source: json.articles[0].source.name,
-          author: json.articles[0].author,
-          title: json.articles[0].title,
-          description: json.articles[0].description,
-          url: json.articles[0].url,
-          urlToImage: json.articles[0].urlToImage
-        });
+        const country = json.results[0].address_components[0].short_name.toLowerCase();
+        fetch(`https://newsapi.org/v2/top-headlines?country=${country}`, {
+          headers: new Headers({
+            'Authorization': config.NEWS_API_KEY
+          })
+        })
+          .then(response => response.json())
+          .then(json => {
+            setNews({
+              source: json.articles[0].source.name,
+              author: json.articles[0].author,
+              title: json.articles[0].title,
+              description: json.articles[0].description,
+              url: json.articles[0].url,
+              urlToImage: json.articles[0].urlToImage
+            });
+          });
       });
   };
 
@@ -78,7 +83,7 @@ const App = () => {
         fetchWeather(position.coords.latitude, position.coords.longitude);
         fetchQuote();
         fetchBusiness(position.coords.latitude, position.coords.longitude);
-        fetchNews();
+        fetchNews(position.coords.latitude, position.coords.longitude);
       },
       error => {
         setError('Error Fetching Data');
