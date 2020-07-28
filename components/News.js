@@ -2,11 +2,10 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
-const Quote = ({ quote }) => {
+const News = ({ news }) => {
   return (
     <View style={styles.slide}>
-      <Text style={styles.text}>{quote.message}</Text>
-      <Text style={styles.text}>By {quote.author}</Text>
+      <Text style={styles.text}>{news.title}</Text>
     </View>
   )
 };
@@ -25,4 +24,4 @@ const styles = StyleSheet.create({
   }
 });
 
-export default Quote;
+export default News;
