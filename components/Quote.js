@@ -1,10 +1,12 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { Button } from 'react-native-elements';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 const Quote = ({ quote }) => {
   return (
-    <View style={styles.slide}>
+    <View style={styles.container}>
+      <Icon size={48} name={'format-quote-close'} color={'#fff'} />
       <Text style={styles.text}>{quote.message}</Text>
       <Text style={styles.text}>By {quote.author}</Text>
     </View>
@@ -12,16 +14,18 @@ const Quote = ({ quote }) => {
 };
 
 const styles = StyleSheet.create({
-  slide: {
+  container: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#97CAE5'
+    textAlign: 'center',
+    backgroundColor: '#f4a261',
+    paddingLeft: 25,
+    paddingRight: 25,
   },
   text: {
     color: '#fff',
     fontSize: 30,
-    fontWeight: 'bold'
   }
 });
 

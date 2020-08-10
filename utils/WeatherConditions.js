@@ -6,7 +6,7 @@ module.exports = {
     icon: 'weather-rainy'
   },
   Clear: {
-    color: '#f7b733',
+    color: '#E9C46A',
     title: 'So Sunny',
     subtitle: 'It is hurting my eyes',
     icon: 'weather-sunny'
@@ -18,7 +18,7 @@ module.exports = {
     icon: 'weather-lightning'
   },
   Clouds: {
-    color: '#1F1C2C',
+    color: '#264653',
     title: 'Clouds',
     subtitle: 'Everywhere',
     icon: 'weather-cloudy'

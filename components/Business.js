@@ -1,26 +1,39 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Linking } from 'react-native';
+import { Button } from 'react-native-elements';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 const Business = ({ business }) => {
   return (
-    <View style={styles.slide}>
-      <Text style={styles.text}>{business.name}</Text>
+    <View style={styles.container}>
+      <Icon size={48} name={'food-fork-drink'} color={'#fff'} />
+      <Button
+        title={business.name}
+        titleStyle={{
+          color: "#fff",
+          fontSize: 30,
+        }}
+        buttonStyle={{
+          backgroundColor: "#E76F51",
+        }}
+        onPress={() => {
+          Linking.openURL(business.url);
+        }}
+      />
     </View>
   )
 };
 
 const styles = StyleSheet.create({
-  slide: {
+  container: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#97CAE5'
+    backgroundColor: '#E76F51',
   },
   text: {
     color: '#fff',
-    fontSize: 30,
-    fontWeight: 'bold'
+    fontSize: 35,
   }
 });
 

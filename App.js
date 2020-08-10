@@ -1,24 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Button, StyleSheet } from 'react-native';
+import { StyleSheet, Text, View, Linking, ActivityIndicator } from 'react-native';
+import { Button } from 'react-native-elements';
 import Swiper from 'react-native-swiper';
-import * as WebBrowser from 'expo-web-browser';
-import { makeRedirectUri, useAuthRequest } from 'expo-auth-session';
-import { encode as btoa } from 'base-64';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { NavigationContainer } from '@react-navigation/native';
+import { createStackNavigator } from '@react-navigation/stack';
+import * as Google from 'expo-google-app-auth';
+import firebase from 'firebase';
+import { firebaseConfig } from './utils/firebase.js';
 import config from './utils/config.js';
 import Weather from './components/Weather.js';
 import Quote from './components/Quote.js';
 import Business from './components/Business.js';
 import News from './components/News.js';
 
-WebBrowser.maybeCompleteAuthSession();
+firebase.initializeApp(firebaseConfig);
 
-const discovery = {
-  authorizationEndpoint: 'https://accounts.spotify.com/authorize',
-  tokenEndpoint: 'https://accounts.spotify.com/api/token',
-};
-
-const App = () => {
-  const [isLoading, setIsLoading] = useState(true);
+const HomeScreen = () => {
   const [temperature, setTemperature] = useState(0);
   const [weatherCondition, setWeatherCondition] = useState(null);
   const [quote, setQuote] = useState({ message: '', author: ''});
@@ -32,7 +30,6 @@ const App = () => {
       .then(json => {
         setTemperature(json.main.temp);
         setWeatherCondition(json.weather[0].main);
-        setIsLoading(false);
       });
   };
 
@@ -87,70 +84,7 @@ const App = () => {
       });
   };
 
-  const [request, response, promptAsync] = useAuthRequest(
-    {
-      clientId: config.SPOTIFY_CLIENT_ID,
-      scopes: ['user-modify-playback-state','user-read-currently-playing','user-read-playback-state','user-library-modify',
-      'user-library-read','playlist-read-private','playlist-read-collaborative','playlist-modify-public',
-      'playlist-modify-private','user-read-recently-played','user-top-read'],
-      usePKCE: false,
-      redirectUri: makeRedirectUri({
-        native: config.SPOTIFY_REDIRECT_URI
-      }),
-    },
-    discovery
-  );
-
   useEffect(() => {
-    if (response?.type === 'success') {
-      const { code } = response.params;
-      const credsB64 = btoa(`${config.SPOTIFY_CLIENT_ID}:${config.SPOTIFY_CLIENT_SECRET}`);
-      fetch(discovery.tokenEndpoint, {
-        method: 'POST',
-        headers: {
-          Authorization: `Basic ${credsB64}`,
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: `grant_type=authorization_code&code=${code}&redirect_uri=${makeRedirectUri({
-          native: config.SPOTIFY_REDIRECT_URI
-        })}`
-      })
-        .then(response => response.json())
-        .then(json => {
-          const accessToken = json.access_token
-          fetch(`https://api.spotify.com/v1/playlists/2Pu5NN6ZX2uq2xk7gdx91s/tracks?limit=1`, {
-            method: 'GET',
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-              'Content-Type': 'application/x-www-form-urlencoded'
-            }
-          })
-            .then(response => response.json())
-            .then(json => {
-              const track = json.items[0].track;
-              const contextUri = track.uri;
-              fetch('https://api.spotify.com/v1/me/player/devices', {
-                headers: {
-                  Authorization: `Bearer ${accessToken}`,
-                },
-              })
-                .then(response => response.json())
-                .then(json => {
-                  fetch(`https://api.spotify.com/v1/me/player/play?device_id=${json.devices[0].id}`, {
-                    method: 'PUT',
-                    headers: {
-                      Authorization: `Bearer ${accessToken}`,
-                    },
-                    body: {"context_uri": "spotify:playlist:2Pu5NN6ZX2uq2xk7gdx91s"}
-                    // {"uris": ["spotify:track:1ooO1j7bseZCHaCFxVpoMq", "spotify:track:16qPkGAjjtZ9dKuSUwpFB5"]}
-                  })
-                    .then(response => response.text())
-                    .then(json => console.log(json));
-                });
-            });
-        });
-    }
-
     navigator.geolocation.getCurrentPosition(
       position => {
         fetchWeather(position.coords.latitude, position.coords.longitude);
@@ -162,55 +96,157 @@ const App = () => {
       }
     );
     fetchQuote();
-  }, [response]);
+  }, []);
 
   return (
-    <Swiper style={styles.wrapper}>
+    <Swiper style={styles.wrapper} activeDotColor="#fff">
       <View style={styles.container}>
-        {isLoading ? (
-          <Text>Fetching The Weather</Text>
-        ) : (
-          <Weather temperature={temperature} weather={weatherCondition} />
-        )}
-      </View>
-      <View style={styles.slide}>
-        <Button
-          disabled={!request}
-          title="Login"
-          onPress={() => {
-            promptAsync();
-            }}
-        />
+        <View style={styles.welcomeContainer}>
+          <Icon size={48} name={'balloon'} color={'#fff'} />
+          <Text style={styles.text}>Welcome back, Nate!</Text>
+        </View>
       </View>
       <View style={styles.container}>
         <Quote quote={quote} />
       </View>
       <View style={styles.container}>
-        <Business business={business} />
+          <Weather temperature={temperature} weather={weatherCondition} />
       </View>
       <View style={styles.container}>
         <News news={news} />
+      </View>
+      <View style={styles.container}>
+        <Business business={business} />
       </View>
     </Swiper>
   );
 };
 
+const LoginScreen = ({ navigation }) => {
+  const isUserEqual = (googleUser, firebaseUser) => {
+    if (firebaseUser) {
+      var providerData = firebaseUser.providerData;
+      for (var i = 0; i < providerData.length; i++) {
+        if (providerData[i].providerId === firebase.auth.GoogleAuthProvider.PROVIDER_ID &&
+            providerData[i].uid === googleUser.getBasicProfile().getId()) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  const onSignIn = googleUser => {
+    var unsubscribe = firebase.auth().onAuthStateChanged(function(firebaseUser) {
+      unsubscribe();
+      if (!isUserEqual(googleUser, firebaseUser)) {
+        var credential = firebase.auth.GoogleAuthProvider.credential(
+          googleUser.idToken, googleUser.accessToken);
+        firebase.auth().signInWithCredential(credential)
+        .then(function(result) {
+          if (result.additionalUserInfo.isNewUser) {
+            firebase.database().ref('/users/' + result.user.uid)
+            .set({
+              gmail: result.user.email,
+              profile_picture: result.additionalUserInfo.profile.picture,
+              locale: result.additionalUserInfo.profile.locale,
+              first_name: result.additionalUserInfo.profile.given_name,
+              created_at: Date.now()
+            })
+          } else {
+            firebase.database().ref('/users/' + result.user.uid)
+            .update({
+              last_logged_in: Date.now()
+            })
+          }
+        })
+        .catch(function(error) {
+          var errorCode = error.code;
+          var errorMessage = error.message;
+          var email = error.email;
+          var credential = error.credential;
+        });
+      }
+    });
+  }
+
+  const signInWithGoogleAsync = async () => {
+    try {
+      const result = await Google.logInAsync({
+        iosClientId: config.GOOGLE_IOS_CLIENT_ID,
+        scopes: ['profile', 'email'],
+      });
+
+      if (result.type === 'success') {
+        onSignIn(result);
+        return result.accessToken;
+      } else {
+        return { cancelled: true };
+      }
+    } catch (e) {
+      return { error: true };
+    }
+  }
+
+  return (
+    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+      <Button
+        title="Login"
+        onPress={() => signInWithGoogleAsync()}
+      />
+    </View>
+  );
+}
+
+const LoadingScreen = ({ navigation }) => {
+  useEffect(() => {
+    checkIfLoggedIn();
+  },[])
+
+  const checkIfLoggedIn = () => {
+    firebase.auth().onAuthStateChanged(user => {
+      if (user) {
+        navigation.navigate('Home')
+      } else {
+        navigation.navigate('Login')
+      }
+    })
+  }
+
+  return (
+    <View style={styles.container}></View>
+  )
+}
+
+const Stack = createStackNavigator();
+
+const App = () => {
+  return (
+    <NavigationContainer>
+      <Stack.Navigator>
+        <Stack.Screen name="Loading" component={LoadingScreen} options={{ title: 'Loading', headerLeft: () => (<View></View>) }}/>
+        <Stack.Screen name="Home" component={HomeScreen} options={{ title: 'Your Dailies', headerLeft: () => (<View></View>) }}/>
+        <Stack.Screen name="Login" component={LoginScreen} options={{ title: 'Login', headerLeft: () => (<View></View>) }}/>
+      </Stack.Navigator>
+    </NavigationContainer>
+  );
+}
+
 const styles = StyleSheet.create({
+  wrapper: {},
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#fff'
   },
-  wrapper: {},
-  slide: {
+  welcomeContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#97CAE5'
+    backgroundColor: '#2a9d8f',
   },
   text: {
     color: '#fff',
     fontSize: 30,
-    fontWeight: 'bold'
   }
 });
 

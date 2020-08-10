@@ -10,5 +10,7 @@ npm-debug.*
 web-build/
 package-lock.json
 utils/config.js
+utils/firebase.js
+spotify.js
 # macOS
 .DS_Store

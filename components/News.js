@@ -1,26 +1,41 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Linking } from 'react-native';
+import { Button } from 'react-native-elements';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 const News = ({ news }) => {
   return (
-    <View style={styles.slide}>
-      <Text style={styles.text}>{news.title}</Text>
+    <View style={styles.container}>
+      <Icon size={48} name={'newspaper'} color={'#fff'} />
+      <Button
+        title={`${news.title}`}
+        titleStyle={{
+          color: "#fff",
+          fontSize: 30,
+        }}
+        buttonStyle={{
+          backgroundColor: "#264653",
+        }}
+        onPress={() => {
+          Linking.openURL(news.url);
+        }}
+      />
     </View>
   )
 };
 
 const styles = StyleSheet.create({
-  slide: {
+  container: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#97CAE5'
+    backgroundColor: '#264653',
+    paddingLeft: 25,
+    paddingRight: 25
   },
   text: {
     color: '#fff',
     fontSize: 30,
-    fontWeight: 'bold'
   }
 });
 
