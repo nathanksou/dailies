@@ -12,5 +12,7 @@ package-lock.json
 utils/config.js
 utils/firebase.js
 spotify.js
+PRESS-RELEASE.md
+_PRESS-RELEASE.md
 # macOS
 .DS_Store

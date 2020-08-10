@@ -1,1 +1,1 @@
-# Dailies, the Goal Management Social App
+# Dailies, daily information just for you!
